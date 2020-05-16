@@ -38,6 +38,9 @@ public class Course {
   }
 
   public Course getMoreInformation(AspenWebFetch webFetch) {
+    return getMoreInformation(webFetch, null);
+  }
+  public Course getMoreInformation(AspenWebFetch webFetch, String term) {
     try {
       this.classInfoPage = webFetch.getCourseInfoPage(id).parse().body();
       this.postedGrades = getTermGrades();

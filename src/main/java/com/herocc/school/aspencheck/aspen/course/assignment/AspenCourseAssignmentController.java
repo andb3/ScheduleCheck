@@ -32,7 +32,7 @@ public class AspenCourseAssignmentController {
 
     if (u != null && p != null) {
       AspenWebFetch aspenWebFetch = new AspenWebFetch(districtName, u, p);
-      List<Assignment> a = getAssignmentList(aspenWebFetch, getCourse(aspenWebFetch, course, false), term);
+      List<Assignment> a = getAssignmentList(aspenWebFetch, getCourse(aspenWebFetch, course, false, null), term);
       if (a == null) return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new JSONReturn(null, new ErrorInfo("j", 9, "b")));
       return new ResponseEntity<>(new JSONReturn(a, new ErrorInfo()), HttpStatus.OK);
     } else {
