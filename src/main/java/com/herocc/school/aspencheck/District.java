@@ -11,21 +11,21 @@ import java.util.logging.Level;
 import static com.herocc.school.aspencheck.GenericEventGenerator.SourceType;
 
 public class District extends TimestampedObject {
-  
+
   // Public Information
   public Schedule schedule;
   public ArrayList<Event> events;
-  
+
   // Configs
   public String districtName;
   public String aspenBaseUrl;
-  
+
   public String aspenUsername;
   public String aspenPassword;
-  
+
   public Map<SourceType, List<String>> announcementsSources;
-  
-  
+
+
   public District() {
     asOf = 0;
     Timer autoRefresh = new Timer();
@@ -48,21 +48,21 @@ public class District extends TimestampedObject {
     }).start();
     // We need to use a thread here because if we didn't, Jackson wouldn't have finished serializing the object
   }
-  
+
   public void refresh() {
     AspenCheck.log.log(Level.INFO, "Refreshing " + districtName + "'s info, " + AspenCheck.getUnixTime() + " > " + asOf);
     asOf = AspenCheck.getUnixTime();
-    
+
     new Thread(() -> {
       Thread scheduleThread = new Thread(() -> AspenScheduleController.refreshSchedule(this));
       Thread calendarThread = new Thread(() -> CalendarController.refreshEvents(this));
-  
+
       calendarThread.start();
       if (checkCredsValid()) {
         scheduleThread.start(); // Don't try to get the schedule if we don't have a login
         AspenCheck.log.fine(districtName + "'s schedule not being fetched due to invalid credentials");
       }
-  
+
       try {
         scheduleThread.join();
         calendarThread.join();
@@ -71,11 +71,11 @@ public class District extends TimestampedObject {
       }
     }).start();
   }
-  
+
   private boolean checkCredsValid() {
     aspenUsername = AspenCheck.getEnvFromKey(aspenUsername);
     aspenPassword = AspenCheck.getEnvFromKey(aspenPassword);
-    
+
     return !(AspenCheck.isNullOrEmpty(aspenUsername) || AspenCheck.isNullOrEmpty(aspenPassword));
   }
 }

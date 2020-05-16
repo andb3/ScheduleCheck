@@ -25,6 +25,16 @@
         "csv": [],
         "ical": []
       }
+    },
+    "dcps": {
+      "districtName": "dcps",
+      "aspenBaseUrl": "https://aspen.dcps.dc.gov/aspen",
+      "aspenUsername": "",
+      "aspenPassword": "",
+      "announcementsSources": {
+        "csv": [],
+        "ical": []
+      }
     }
   }
 }

@@ -6,6 +6,8 @@ import com.herocc.school.aspencheck.GenericWebFetch;
 import org.jsoup.Connection;
 import org.jsoup.HttpStatusException;
 import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.FormElement;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -14,29 +16,29 @@ import java.util.Map;
 public class AspenWebFetch extends GenericWebFetch {
   private String aspenBaseUrl;
   public String districtName;
-  
+
   private Connection.Response courseListPage;
   private Connection.Response schedulePage;
   private Connection.Response studentInfoPage;
-  
+
   public AspenWebFetch(String dName, String username, String password) {
     this.aspenBaseUrl = "https://" + dName + ".myfollett.com/aspen";
     this.districtName = dName;
-    
+
     if (AspenCheck.config.districts.containsKey(dName)) {
       District d = AspenCheck.config.districts.get(dName);
       aspenBaseUrl = d.aspenBaseUrl;
     }
-    
+
     this.login(username, password);
   }
-  
+
   public AspenWebFetch(District district) {
     this.aspenBaseUrl = district.aspenBaseUrl;
     this.districtName = district.districtName;
     this.login(district.aspenUsername, district.aspenPassword);
   }
-  
+
   public Boolean areCredsCorrect() {
     try {
       return getPage(aspenBaseUrl + "/home.do").statusCode() == 200;
@@ -45,7 +47,7 @@ public class AspenWebFetch extends GenericWebFetch {
     }
     return false;
   }
-  
+
   public Connection.Response getStudentInfoPage() {
     if (studentInfoPage != null) return studentInfoPage;
     try {
@@ -56,18 +58,21 @@ public class AspenWebFetch extends GenericWebFetch {
     }
     return null;
   }
-  
+
   public Connection.Response getCourseListPage() {
     if (courseListPage != null) return courseListPage;
     try {
+      AspenCheck.log.info("getting " + aspenBaseUrl + "/portalClassList.do?navkey=academics.classes.list&maximized=true");
+      AspenCheck.log.info("cookies = " + demCookies);
       courseListPage = getPage(aspenBaseUrl + "/portalClassList.do?navkey=academics.classes.list&maximized=true");
+      AspenCheck.log.info("" + courseListPage.statusCode());
       return courseListPage;
     } catch (IOException e) {
       e.printStackTrace();
     }
     return null;
   }
-  
+
   public Connection.Response getCourseInfoPage(String courseId) {
     Map<String, String> map = new HashMap<>();
     map.put("selectedStudentOid", courseId);
@@ -78,7 +83,7 @@ public class AspenWebFetch extends GenericWebFetch {
     }
     return null;
   }
-  
+
   public Connection.Response getCourseAssignmentsPage(String courseId) {
     Map<String, String> map = new HashMap<>();
     map.put("oid", courseId);
@@ -89,7 +94,29 @@ public class AspenWebFetch extends GenericWebFetch {
     }
     return null;
   }
-  
+
+
+  public Connection.Response getCourseAssignmentsPage(String courseId, int term) {
+    Map<String, String> map = new HashMap<>();
+    map.put("oid", courseId);
+    String url = aspenBaseUrl + "/portalAssignmentList.do?navkey=academics.classes.list.gcd&maximized=true";
+    try {
+      // when term is switched, Aspen actually gets the term for the most recently opened class
+      // (since the only way a user could change term on the website would be to already have the class page open)
+      // so, we open the default class page first and then switch the term
+      getPage(url, map);
+
+      map.put("gradeTermOid", "GTMP10000000Q" + term);
+      map.put("userEvent", "2210");
+
+      return getPage(url, map);
+
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    return null;
+  }
+
   public Connection.Response getSchedulePage() {
     if (schedulePage != null) return schedulePage;
     try {
@@ -107,8 +134,8 @@ public class AspenWebFetch extends GenericWebFetch {
     }
     return null;
   }
-  
-  public Connection.Response login(String username, String password) {
+
+  public void login(String username, String password) {
     try {
       String loginUrl = aspenBaseUrl + "/logon.do";
       Connection.Response loginPageResponse = Jsoup.connect(loginUrl)
@@ -116,25 +143,26 @@ public class AspenWebFetch extends GenericWebFetch {
                       .timeout(10 * 1000)
                       .followRedirects(true)
                       .execute();
-      
+
       if (loginPageResponse.statusCode() == 404) {
         AspenCheck.log.warning("No login page found at " + aspenBaseUrl);
-        return null;
+        return;
       }
-      
+
       Map<String, String> mapLoginPageCookies = loginPageResponse.cookies();
       Map<String, String> mapParams = new HashMap<>();
-      mapParams.put("deploymentId", districtName);
+      //mapParams.put("deploymentId", districtName);
+      mapParams.put("deploymentId", "x2sis");
       mapParams.put("userEvent", "930");
       mapParams.put("username", username);
       mapParams.put("password", password);
       mapParams.put("mobile", "false");
-      
+
       if (username == null || password == null) {
         AspenCheck.log.warning("Invalid Username or Password!");
-        return null;
+        return;
       }
-      
+
       Connection.Response responsePostLogin = Jsoup.connect(loginUrl)
               .referrer(loginUrl)
               .userAgent(AspenCheck.config.webUserAgent)
@@ -143,17 +171,16 @@ public class AspenWebFetch extends GenericWebFetch {
               .cookies(mapLoginPageCookies)
               .followRedirects(true)
               .execute();
-      
+
       Map<String, String> mapLoggedInCookies = responsePostLogin.cookies();
       demCookies.putAll(mapLoggedInCookies);
       demCookies.putAll(mapLoginPageCookies);
-  
+
       if (responsePostLogin.statusCode() == 500) AspenCheck.log.warning("Username or Pass incorrect");
-      
-      return responsePostLogin;
+
+      //return responsePostLogin;
     } catch (IOException e) {
       e.printStackTrace();
-      return null;
     }
   }
 }

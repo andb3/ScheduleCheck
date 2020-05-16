@@ -15,7 +15,7 @@ import java.util.Map;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class Course {
   private Element classInfoPage;
-  
+
   public String id;
   public String name;
   public String code;
@@ -23,10 +23,10 @@ public class Course {
   public String teacher;
   public String room;
   public String currentTermGrade;
-  
+
   public Map<String, String> postedGrades;
   public List<Assignment> assignments;
-  
+
   public Course(Element classListRow) {
     id = classListRow.getElementsByTag("td").get(1).id().trim();
     name = classListRow.getElementsByTag("td").get(1).text().trim(); // Also possibly td[3]
@@ -36,19 +36,19 @@ public class Course {
     room = classListRow.getElementsByTag("td").get(6).text().trim();
     currentTermGrade = classListRow.getElementsByTag("td").get(7).text().trim();
   }
-  
+
   public Course getMoreInformation(AspenWebFetch webFetch) {
     try {
       this.classInfoPage = webFetch.getCourseInfoPage(id).parse().body();
       this.postedGrades = getTermGrades();
-      
-      this.assignments = AspenCourseAssignmentController.getAssignmentList(webFetch, this);
+
+      this.assignments = AspenCourseAssignmentController.getAssignmentList(webFetch, this, null);
     } catch (IOException e) {
       e.printStackTrace();
     }
     return this;
   }
-  
+
   private Map<String, String> getTermGrades() {
     Map<String, String> termGrades = new HashMap<>();
     Elements e = classInfoPage.getElementsByAttributeValueContaining("class", "listHeaderText inputGridCellActive listCell").get(0).getElementsByTag("td");
