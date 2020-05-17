@@ -25,6 +25,7 @@ public class District extends TimestampedObject {
 
   public Map<SourceType, List<String>> announcementsSources;
 
+  public Map<String, Integer> columnOrganization = defaultColumnOrganization();
 
   public District() {
     asOf = 0;
@@ -77,5 +78,31 @@ public class District extends TimestampedObject {
     aspenPassword = AspenCheck.getEnvFromKey(aspenPassword);
 
     return !(AspenCheck.isNullOrEmpty(aspenUsername) || AspenCheck.isNullOrEmpty(aspenPassword));
+  }
+
+  @Override
+  public String toString() {
+    return "District{" +
+      "schedule=" + schedule +
+      ", events=" + events +
+      ", districtName='" + districtName + '\'' +
+      ", aspenBaseUrl='" + aspenBaseUrl + '\'' +
+      ", aspenUsername='" + aspenUsername + '\'' +
+      ", aspenPassword='" + aspenPassword + '\'' +
+      ", announcementsSources=" + announcementsSources +
+      ", columnOrganization=" + columnOrganization +
+      '}';
+  }
+
+  public static Map<String, Integer> defaultColumnOrganization(){
+    Map<String, Integer> map = new HashMap<>();
+    map.put("className", 1);
+    map.put("id", 1);
+    map.put("courseCode", 2);
+    map.put("term", 4);
+    map.put("teacher", 5);
+    map.put("room", 6);
+    map.put("termGrade", 7);
+    return map;
   }
 }

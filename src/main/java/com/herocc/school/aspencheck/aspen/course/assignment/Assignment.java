@@ -27,7 +27,6 @@ public class Assignment {
     if (!AspenCheck.isNullOrEmpty(possiblePercent)) {
       credit = possiblePercent;
       String scoreColumnText = tdTags.get(4).getElementsByTag("td").get(2).text().trim();
-      AspenCheck.log.info("scoreColumnText = " + scoreColumnText);
       int slashIndex = scoreColumnText.indexOf('/');
       score = scoreColumnText.substring(0, slashIndex).trim();
       possibleScore = scoreColumnText.substring(slashIndex + 1).trim();

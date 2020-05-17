@@ -27,14 +27,14 @@ public class Course {
   public Map<String, String> postedGrades;
   public List<Assignment> assignments;
 
-  public Course(Element classListRow) {
-    id = classListRow.getElementsByTag("td").get(1).id().trim();
-    name = classListRow.getElementsByTag("td").get(1).text().trim(); // Also possibly td[3]
-    code = classListRow.getElementsByTag("td").get(2).text().trim();
-    term = classListRow.getElementsByTag("td").get(4).text().trim();
-    teacher = classListRow.getElementsByTag("td").get(5).text().trim();
-    room = classListRow.getElementsByTag("td").get(6).text().trim();
-    currentTermGrade = classListRow.getElementsByTag("td").get(7).text().trim();
+  public Course(Element classListRow, Map<String, Integer> columnOrganization) {
+    id = classListRow.getElementsByTag("td").get(columnOrganization.get("id")).id().trim();
+    name = classListRow.getElementsByTag("td").get(columnOrganization.get("className")).text().trim(); // Also possibly td[3]
+    code = classListRow.getElementsByTag("td").get(columnOrganization.get("courseCode")).text().trim();
+    term = classListRow.getElementsByTag("td").get(columnOrganization.get("term")).text().trim();
+    teacher = classListRow.getElementsByTag("td").get(columnOrganization.get("teacher")).text().trim();
+    room = classListRow.getElementsByTag("td").get(columnOrganization.get("room")).text().trim();
+    currentTermGrade = classListRow.getElementsByTag("td").get(columnOrganization.get("termGrade")).text().trim();
   }
 
   public Course getMoreInformation(AspenWebFetch webFetch) {
@@ -45,7 +45,7 @@ public class Course {
       this.classInfoPage = webFetch.getCourseInfoPage(id).parse().body();
       this.postedGrades = getTermGrades();
 
-      this.assignments = AspenCourseAssignmentController.getAssignmentList(webFetch, this, null);
+      this.assignments = AspenCourseAssignmentController.getAssignmentList(webFetch, this, term);
     } catch (IOException e) {
       e.printStackTrace();
     }

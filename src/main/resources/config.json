@@ -34,6 +34,15 @@
       "announcementsSources": {
         "csv": [],
         "ical": []
+      },
+      "columnOrganization": {
+        "className": 1,
+        "id": 1,
+        "courseCode": 2,
+        "term": 3,
+        "teacher": 4,
+        "room": 6,
+        "termGrade": 7
       }
     }
   }

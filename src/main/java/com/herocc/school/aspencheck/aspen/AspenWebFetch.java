@@ -73,11 +73,29 @@ public class AspenWebFetch extends GenericWebFetch {
     return null;
   }
 
-  public Connection.Response getCourseInfoPage(String courseId) {
-    Map<String, String> map = new HashMap<>();
-    map.put("selectedStudentOid", courseId);
+  public Connection.Response getCourseListPage(int term) {
+    if (courseListPage != null) return courseListPage;
+    String url = aspenBaseUrl + "/portalClassList.do?navkey=academics.classes.list&maximized=true";
     try {
-      return getPage(aspenBaseUrl + "/portalClassDetail.do?navkey=academics.classes.list.detail&maximized=true", map);
+      AspenCheck.log.info("getting " + aspenBaseUrl + "/portalClassList.do?navkey=academics.classes.list&maximized=true");
+      getPage(url);
+      Map<String, String> formData = new HashMap<>();
+      formData.put("userEvent", "950");
+      formData.put("termFilter", "GTMP10000000Q" + term);
+      courseListPage = getPage(url, formData);
+      return courseListPage;
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    return null;
+  }
+
+
+  public Connection.Response getCourseInfoPage(String courseId) {
+    Map<String, String> formData = new HashMap<>();
+    formData.put("selectedStudentOid", courseId);
+    try {
+      return getPage(aspenBaseUrl + "/portalClassDetail.do?navkey=academics.classes.list.detail&maximized=true", formData);
     } catch (IOException e) {
       e.printStackTrace();
     }
@@ -151,8 +169,7 @@ public class AspenWebFetch extends GenericWebFetch {
 
       Map<String, String> mapLoginPageCookies = loginPageResponse.cookies();
       Map<String, String> mapParams = new HashMap<>();
-      //mapParams.put("deploymentId", districtName);
-      mapParams.put("deploymentId", "x2sis");
+      mapParams.put("deploymentId", loginPageResponse.parse().getElementById("deploymentId").attr("value").trim());
       mapParams.put("userEvent", "930");
       mapParams.put("username", username);
       mapParams.put("password", password);
