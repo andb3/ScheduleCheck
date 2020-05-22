@@ -52,7 +52,7 @@ public class AspenCourseAssignmentController {
     if (assignmentsPage != null) {
       try {
         for (Element assignmentRow : assignmentsPage.parse().body().getElementsByAttributeValueContaining("class", "listCell listRowHeight")) {
-          if (!assignmentRow.text().trim().contains("No matching records")) assignments.add(new Assignment(assignmentRow));
+          if (!assignmentRow.text().trim().contains("No matching records")) assignments.add(new Assignment(assignmentRow, AspenCheck.config.districts.get(a.districtName).gradeScale));
         }
       } catch (IOException e) {
         e.printStackTrace();

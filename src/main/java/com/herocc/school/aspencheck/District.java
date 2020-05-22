@@ -26,6 +26,7 @@ public class District extends TimestampedObject {
   public Map<SourceType, List<String>> announcementsSources;
 
   public Map<String, Integer> columnOrganization = defaultColumnOrganization();
+  public Map<String, Double> gradeScale;
 
   public District() {
     asOf = 0;
