@@ -52,7 +52,7 @@ public class AspenCoursesController {
       if (!a.areCredsCorrect()){
         return new ResponseEntity<>(new JSONReturn(null, new ErrorInfo("Invalid Credentials", 500, "Username or password is incorrect")), HttpStatus.UNAUTHORIZED);
       }
-      Course c = getCourse(a, course, term).getMoreInformation(a, term);
+      Course c = getCourse(a, course, false, term).getMoreInformation(a, term);
       if (c == null)
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new JSONReturn(null, new ErrorInfo("Course not Found", 404, "The course you tried to fetch doesn't exist or was inaccessible")));
       return new ResponseEntity<>(new JSONReturn(c, new ErrorInfo()), HttpStatus.OK);

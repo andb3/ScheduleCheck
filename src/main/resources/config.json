@@ -29,6 +29,7 @@
     "dcps": {
       "districtName": "dcps",
       "aspenBaseUrl": "https://aspen.dcps.dc.gov/aspen",
+      "schedulePage": "/studentScheduleMatrix.do?navkey=myInfo.sch.matrix",
       "aspenUsername": "",
       "aspenPassword": "",
       "announcementsSources": {

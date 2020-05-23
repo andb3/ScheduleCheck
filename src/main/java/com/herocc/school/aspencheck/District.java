@@ -27,6 +27,7 @@ public class District extends TimestampedObject {
 
   public Map<String, Integer> columnOrganization = defaultColumnOrganization();
   public Map<String, Double> gradeScale;
+  public String schedulePage = defaultSchedulePage;
 
   public District() {
     asOf = 0;
@@ -106,4 +107,6 @@ public class District extends TimestampedObject {
     map.put("termGrade", 7);
     return map;
   }
+
+  public static String defaultSchedulePage = "/studentScheduleContextList.do?navkey=myInfo.sch.list";
 }

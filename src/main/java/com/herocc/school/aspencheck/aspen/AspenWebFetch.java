@@ -93,8 +93,11 @@ public class AspenWebFetch extends GenericWebFetch {
 
   public Connection.Response getCourseInfoPage(String courseId) {
     Map<String, String> formData = new HashMap<>();
+    //formData.put("userEvent", "2210");
+    //formData.put("userParam", courseId);
     formData.put("selectedStudentOid", courseId);
     try {
+      //getCourseAssignmentsPage(courseId);
       return getPage(aspenBaseUrl + "/portalClassDetail.do?navkey=academics.classes.list.detail&maximized=true", formData);
     } catch (IOException e) {
       e.printStackTrace();
@@ -137,8 +140,11 @@ public class AspenWebFetch extends GenericWebFetch {
 
   public Connection.Response getSchedulePage() {
     if (schedulePage != null) return schedulePage;
+    String scheduleUrl = (AspenCheck.config.districts.containsKey(districtName)) ? AspenCheck.config.districts.get(districtName).schedulePage : District.defaultSchedulePage;
+    Map<String, String> params = new HashMap<>();
+    params.put("userEvent", "360");
     try {
-      schedulePage = getPage(aspenBaseUrl + "/studentScheduleContextList.do?navkey=myInfo.sch.list");
+      schedulePage = getPage(aspenBaseUrl + scheduleUrl);
       return schedulePage;
     } catch (HttpStatusException e) {
       if (e.getStatusCode() == 404 || e.getStatusCode() == 500) {

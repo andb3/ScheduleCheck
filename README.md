@@ -15,7 +15,7 @@ All endpoints are prefixed with '/api/v1/{district-id}' where `district-id` is t
   * [`/course`](#course-list): Index of enrolled courses, their grades, teachers, etc (auth required)
     * Can use `moreData=true` to get additional info about courses including a list of their assignments
     * Can use `term={number}` to change `currentTermGrade` and the term of the assignments is `moreData=true` is specified
-  * [`/course/{course-id}`](#course): Same info as /course but for only one course (can use `moreData` and `term`)
+  * [`/course/{course-id}`](#course): Same info as `/course?moreData=true` but for only one course (can use `term`)
   * [`/course/{course-id}/assignment`](#assignment-list): Gets a list of all of a course's assignments and their grades
 
 * `/announcements`: Returns all announcements scheduled to run (sources gathered from config)
@@ -78,18 +78,33 @@ curl -H "ASPEN_UNAME: {username}" -H 'ASPEN_PASS: {password}' -X GET 'https://as
         "term" : "FY",
 
         "postedGrades" : {
-                 "4" : "",
-                 "2" : "A",
-                 "3" : "A",
-                 "1" : "A"
+             "4" : "",
+             "2" : "A",
+             "3" : "A",
+             "1" : "A"
          },
         "assignments" : [
                {...},
-        ]
+        ],
+        "categoryTable" : {
+            "1" : [
+                {
+                    "name" : "Assessments",
+                    "weight" : "50.0",
+                    "average" : "91.4",
+                    "letter" : "A-"
+                },
+                ...
+            ],
+            "2" : [...],
+            ...
+        }
     },
     ...
 ]
 ```
+**Notes**
+- `postedGrades`, `assignments`, and `categoryTable` are only available when moreData=true
 
 ### Course
 https://aspencheck.herokuapp.com/api/v1/{district}/aspen/course/{course-id}
@@ -107,18 +122,31 @@ curl -H "ASPEN_UNAME: {username}" -H 'ASPEN_PASS: {password}' -X GET 'https://as
     "term" : "FY",
 
     "postedGrades" : {
-         "1" : "A",
-         "2" : "B",
-         "3" : "C",
-         "4" : "D"
-     },
+        "1" : "A",
+        "2" : "B",
+        "3" : "C",
+        "4" : "D"
+    },
     "assignments" : [
            {...},
-    ]
+    ],
+    "categoryTable" : {
+        "1" : [
+            {
+                "name" : "Assessments",
+                "weight" : "50.0",
+                "average" : "91.4",
+                "letter" : "A-"
+            },
+            ...
+        ],
+        "2" : [...],
+        ...
+    }
 }
 ```
 **Notes**
-- `postedGrades` and `assignments` are only available when moreData=true
+- `postedGrades`, `assignments`, and `categoryTable` are only available when moreData=true
 
 ### Assignment List
 https://aspencheck.herokuapp.com/api/v1/{district}/aspen/course/{course-id}/assignment

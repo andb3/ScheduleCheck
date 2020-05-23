@@ -1,6 +1,7 @@
 package com.herocc.school.aspencheck.aspen.schedule;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.herocc.school.aspencheck.AspenCheck;
 import com.herocc.school.aspencheck.District;
 import com.herocc.school.aspencheck.calendar.Event;
 import org.jsoup.nodes.Document;
@@ -16,7 +17,7 @@ import java.util.regex.Pattern;
 public class Schedule {
   private Document schedPage;
   private District district;
-  
+
   public int day = 0;
   @JsonIgnore public String currentClass = "Z";
   public boolean classInSession = false;
@@ -25,48 +26,51 @@ public class Schedule {
   public int blockOfDay = 0;
   public ArrayList<String> blockOrder = new ArrayList<>();
   public Map<String, ArrayList<String>> dayBlockOrder = new HashMap<>();
-  
+
   public Schedule(Document schedPage) {
     if (schedPage == null) return;
     this.schedPage = schedPage;
-    
+
     initAllPoints();
   }
-  
+
   public Schedule(Document schedPage, District district) {
     this(schedPage);
     this.district = district;
 
     initAllPoints();
   }
-  
+
   private void initAllPoints() {
     this.day = getDay();
     this.currentClass = getCurrentClass();
     this.classInSession = isClassInSession();
     this.block = getBlock();
-    this.advisoryBlock = getAdvisoryBlock(this.day);
+    //this.advisoryBlock = getAdvisoryBlock(this.day);
     this.blockOfDay = getBlockOfDay();
     this.blockOrder = getDaySchedule(this.day);
     this.dayBlockOrder = getAllDaysSchedule();
   }
-  
+
   public static final int blocksInDay = 6;
-  
+
   private Map<String, ArrayList<String>> getAllDaysSchedule() {
+    AspenCheck.log.info("getting all days schedule, schedPage.body = " + schedPage.body().toString());
     int totalDays = schedPage.body().getElementsByAttributeValueContaining("class", "inputGridHeader inputGridColumnHeader").size();
+    AspenCheck.log.info("total days = " + totalDays);
     Map<String, ArrayList<String>> daysSchedule = new HashMap<>();
     for (int i = 1; i <= totalDays; i++) {
       daysSchedule.put(String.valueOf(i), getDaySchedule(i));
     }
+    AspenCheck.log.info("daysSchedule = " + daysSchedule);
     return daysSchedule;
   }
-  
+
   private int getDay() {
     Elements matching = schedPage.body().getElementsByAttributeValueContaining("style", "border: solid 1px red;");
     try {
       matching.first().text();
-  
+
       Matcher m = Pattern.compile("\\d+").matcher(matching.first().text());
       if (m.find()) {
         String thing = m.group(0);
@@ -76,7 +80,7 @@ public class Schedule {
         }
       }
     } catch (NullPointerException ignored) {}
-    
+
     try {
       if (district != null && district.events != null) {
         for (Event e : district.events) {
@@ -84,10 +88,10 @@ public class Schedule {
         }
       }
     } catch (NumberFormatException ignored) {}
-    
+
     return 0;
   }
-  
+
   private String getCurrentClass(){
     Elements matching = schedPage.body().getElementsByAttributeValueContaining("style", "border: solid 1px red;");
     try {
@@ -96,7 +100,7 @@ public class Schedule {
       return null;
     }
   }
-  
+
   private String getBlock(){
     String currentClass = this.getCurrentClass();
     if (currentClass == null) return "Z";
@@ -105,7 +109,7 @@ public class Schedule {
     if (Pattern.matches("[A-G]", gotBlock)) return gotBlock;
     return "Z";
   }
-  
+
   private int getBlockOfDay(){
     try {
       return Integer.valueOf(String.valueOf(schedPage.body().getElementsByAttributeValueContaining("style", "border: solid 1px red;")
@@ -114,11 +118,11 @@ public class Schedule {
       return 6;
     }
   }
-  
+
   private ArrayList<String> getDaySchedule(int day){
     ArrayList<String> blocks = new ArrayList<>();
     if (day == 0) return blocks;
-    
+
     Elements trs = schedPage.body().getElementsByAttributeValueContaining("class", "listHeader headerLabelBackground")
             .first().siblingElements();
     for (int i = 0; i < Math.min(trs.size(), blocksInDay); i++) { // 6 is number of blocks in the day
@@ -128,10 +132,10 @@ public class Schedule {
     }
     return blocks;
   }
-  
+
   private String getAdvisoryBlock(int day) {
     String advisoryBlock = "Z"; // Return Z if there is no advisory
-    
+
     Elements trs = schedPage.body().getElementsByAttributeValueContaining("class", "listHeader headerLabelBackground")
             .first().siblingElements();
     if (trs.size() <= blocksInDay) return advisoryBlock;
@@ -140,7 +144,7 @@ public class Schedule {
     // TODO for now this returns an (unknown magic) number, try to decipher what it means
     return advisoryBlock;
   }
-  
+
   private boolean isClassInSession() {
     return currentClass != null;
   }
