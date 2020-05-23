@@ -30,7 +30,11 @@ public class AspenCoursesController {
                                                   @RequestParam(value = "term", required = false) String term) {
 
     if (u != null && p != null) {
-      return new ResponseEntity<>(new JSONReturn(getCourses(new AspenWebFetch(districtName, u, p), moreData.equals("true"), term), new ErrorInfo()), HttpStatus.OK);
+      AspenWebFetch aspenWebFetch = new AspenWebFetch(districtName, u, p);
+      if (!aspenWebFetch.areCredsCorrect()){
+        return new ResponseEntity<>(new JSONReturn(null, new ErrorInfo("Invalid Credentials", 500, "Username or password is incorrect")), HttpStatus.UNAUTHORIZED);
+      }
+      return new ResponseEntity<>(new JSONReturn(getCourses(aspenWebFetch, moreData.equals("true"), term), new ErrorInfo()), HttpStatus.OK);
     } else {
       return new ResponseEntity<>(new JSONReturn(null, new ErrorInfo("Invalid Credentials", 0, "No username or password given")), HttpStatus.UNAUTHORIZED);
     }
@@ -45,6 +49,9 @@ public class AspenCoursesController {
 
     if (u != null && p != null) {
       AspenWebFetch a = new AspenWebFetch(districtName, u, p);
+      if (!a.areCredsCorrect()){
+        return new ResponseEntity<>(new JSONReturn(null, new ErrorInfo("Invalid Credentials", 500, "Username or password is incorrect")), HttpStatus.UNAUTHORIZED);
+      }
       Course c = getCourse(a, course, term).getMoreInformation(a, term);
       if (c == null)
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new JSONReturn(null, new ErrorInfo("Course not Found", 404, "The course you tried to fetch doesn't exist or was inaccessible")));

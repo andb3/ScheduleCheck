@@ -47,7 +47,6 @@ public class Assignment {
   private static String findLetter(double grade, List<Map.Entry<String, Double>> gradeScale){
     double percent = grade * 100;
     gradeScale.sort(Comparator.comparingDouble(Map.Entry::getValue));
-    System.out.println("finding letter for " + grade + ", gradeScale = " + gradeScale);
     for (int i = 0; i < gradeScale.size(); i++) {
       Map.Entry<String, Double> entry = gradeScale.get(i);
       if (i == gradeScale.size() - 1) return  entry.getKey();

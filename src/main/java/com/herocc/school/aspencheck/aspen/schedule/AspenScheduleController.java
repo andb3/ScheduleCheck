@@ -16,14 +16,14 @@ import java.io.IOException;
 @RestController
 @RequestMapping("/{district-id}/aspen")
 public class AspenScheduleController {
-  
-  @RequestMapping("schedule")
+
+  @RequestMapping("/schedule")
   public ResponseEntity<JSONReturn> serveSchedule(@PathVariable(value="district-id") String districtName,
                                   @RequestHeader(value="ASPEN_UNAME", required=false) String u,
                                   @RequestHeader(value="ASPEN_PASS", required=false) String p){
-    
+    AspenCheck.log.info("serving schedule for " + districtName);
     District d = AspenCheck.config.districts.get(districtName);
-    
+
     if (u != null && p != null) {
       return new ResponseEntity<>(new JSONReturn(getSchedule(districtName, u, p), new ErrorInfo()), HttpStatus.OK);
     } else if (d != null) {
@@ -32,12 +32,13 @@ public class AspenScheduleController {
       return new ResponseEntity<>(new JSONReturn(null, new ErrorInfo("No configured district for schedule", 0, "No username or password given, and no cache configured for your district")), HttpStatus.NOT_FOUND);
     }
   }
-  
+
   public static void refreshSchedule(District d) {
     d.schedule = getSchedule(d);
   }
-  
+
   public static Schedule getSchedule(District d) {
+    AspenCheck.log.info("getting schedule for " + d.districtName);
     AspenWebFetch aspenWebFetch = new AspenWebFetch(d);
     Connection.Response schedulePage = aspenWebFetch.getSchedulePage();
     if (schedulePage != null) {
@@ -50,7 +51,7 @@ public class AspenScheduleController {
     }
     return null;
   }
-  
+
   private static Schedule getSchedule(String districtName, String username, String password) {
     AspenWebFetch aspenWebFetch = new AspenWebFetch(districtName, username, password);
     Connection.Response schedulePage = aspenWebFetch.getSchedulePage();
