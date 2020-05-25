@@ -36,7 +36,7 @@ public class AspenCoursesController {
       }
       return new ResponseEntity<>(new JSONReturn(getCourses(aspenWebFetch, moreData.equals("true"), term), new ErrorInfo()), HttpStatus.OK);
     } else {
-      return new ResponseEntity<>(new JSONReturn(null, new ErrorInfo("Invalid Credentials", 0, "No username or password given")), HttpStatus.UNAUTHORIZED);
+      return AspenCheck.invalidCredentialsResponse();
     }
   }
 
@@ -57,7 +57,7 @@ public class AspenCoursesController {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new JSONReturn(null, new ErrorInfo("Course not Found", 404, "The course you tried to fetch doesn't exist or was inaccessible")));
       return new ResponseEntity<>(new JSONReturn(c, new ErrorInfo()), HttpStatus.OK);
     } else {
-      return new ResponseEntity<>(new JSONReturn(null, new ErrorInfo("Invalid Credentials", 0, "No username or password given")), HttpStatus.UNAUTHORIZED);
+      return AspenCheck.invalidCredentialsResponse();
     }
   }
 

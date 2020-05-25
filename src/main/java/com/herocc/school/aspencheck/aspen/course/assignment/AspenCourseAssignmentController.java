@@ -39,7 +39,7 @@ public class AspenCourseAssignmentController {
       if (a == null) return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new JSONReturn(null, new ErrorInfo("j", 9, "b")));
       return new ResponseEntity<>(new JSONReturn(a, new ErrorInfo()), HttpStatus.OK);
     } else {
-      return new ResponseEntity<>(new JSONReturn(null, new ErrorInfo("Invalid Credentials", 0, "No username or password given")), HttpStatus.UNAUTHORIZED);
+      return AspenCheck.invalidCredentialsResponse();
     }
   }
 

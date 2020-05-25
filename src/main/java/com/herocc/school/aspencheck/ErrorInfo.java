@@ -4,12 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 
 /**
- * Returns a generic data object
- *
- * @param String title
+ * Holds information about errors in a given fetch to return to user
  */
-@AllArgsConstructor
-@NoArgsConstructor
 public class ErrorInfo {
   //title: General info about error
   public String title;
@@ -17,4 +13,12 @@ public class ErrorInfo {
   public int id;
   //detail: More specific information about the error.
   public String details;
+
+  public ErrorInfo() { }
+
+  public ErrorInfo(String title, int id, String details) {
+    this.title = title;
+    this.id = id;
+    this.details = details;
+  }
 }

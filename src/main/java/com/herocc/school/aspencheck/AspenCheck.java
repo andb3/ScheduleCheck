@@ -7,6 +7,8 @@ import com.rollbar.notifier.config.Config;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -78,5 +80,9 @@ public class AspenCheck {
     }
     if (lowercaseFirstLetter) sb.replace(0, 1, String.valueOf(Character.toLowerCase(sb.charAt(0))));
     return sb.toString();
+  }
+
+  public static ResponseEntity<JSONReturn> invalidCredentialsResponse(){
+    return new ResponseEntity<>(new JSONReturn(null, new ErrorInfo("Invalid Credentials", 0, "No username or password given")), HttpStatus.UNAUTHORIZED);
   }
 }

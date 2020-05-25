@@ -10,6 +10,7 @@ All endpoints are prefixed with '/api/v1/{district-id}' where `district-id` is t
 - If the URL of your Aspen instance is not in the format of `https://{district-id}.myfollet.com/aspen` then `config.json` needs to be updated to reflect it. Additionally, if you want other configuration information (i.e. grade scale), make an issue or a pull request with the necessary config to add to `config.json`
 
 * `/aspen`: All endpoints involving aspen
+  * [`/checkLogin`](#check-login): Checks whether a username and password is correct for an aspen instance (auth required)
   * [`/schedule`](#schedule): Returns schedule information, such as day, block, etc. (config / auth optional)
   * `/student`: Returns grade, ID, etc regarding the student (auth required)
   * [`/course`](#course-list): Index of enrolled courses, their grades, teachers, etc (auth required)
@@ -17,6 +18,7 @@ All endpoints are prefixed with '/api/v1/{district-id}' where `district-id` is t
     * Can use `term={number}` to change `currentTermGrade` and the term of the assignments is `moreData=true` is specified
   * [`/course/{course-id}`](#course): Same info as `/course?moreData=true` but for only one course (can use `term`)
   * [`/course/{course-id}/assignment`](#assignment-list): Gets a list of all of a course's assignments and their grades
+  * [`/recent`](#recent-assignments): Gets a list of recently entered assignments
 
 * `/announcements`: Returns all announcements scheduled to run (sources gathered from config)
 
@@ -33,6 +35,17 @@ All endpoints are prefixed with '/api/v1/{district-id}' where `district-id` is t
     "id": 0,
     "details": null
 }
+```
+- All other examples show only data field
+
+### Check Login
+https://aspencheck.herokuapp.com/api/v1/{district}/aspen/checkLogin
+```shell script
+curl -H "ASPEN_UNAME: {username}" -H 'ASPEN_PASS: {password}' -X GET 'https://aspencheck.herokuapp.com/api/v1/{district}/aspen/checkLogin' | json_pp
+```
+
+```javascript
+"data": true
 ```
 
 ### Schedule
@@ -173,3 +186,23 @@ curl -H "ASPEN_UNAME: {username}" -H 'ASPEN_PASS: {password}' -X GET 'https://as
 - `score` is null if no grade or missing
 - `possibleScore` is null if no grade, if missing
 - `letterGrade` is null if no grading scale provided
+
+### Recent Assignments
+https://aspencheck.herokuapp.com/api/v1/{district}/aspen/recent
+```shell script
+curl -H "ASPEN_UNAME: {username}" -H 'ASPEN_PASS: {password}' -X GET 'https://aspencheck.herokuapp.com/api/v1/{district}/aspen/recent' | json_pp
+```
+```javascript
+"data": [
+    {
+        "name" : "Assignment Name",
+        "id" : "ABC00000123Gtk",
+        "course" : "Class Name",
+        "credit" : "10"
+    },
+    {...},
+    ...
+]
+```
+**Notes**
+- Does not have the same information as `/assignments`, can use the id to cross-reference

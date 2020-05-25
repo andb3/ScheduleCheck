@@ -17,6 +17,7 @@ public class AspenWebFetch extends GenericWebFetch {
   private String aspenBaseUrl;
   public String districtName;
 
+  private Connection.Response homePage;
   private Connection.Response courseListPage;
   private Connection.Response schedulePage;
   private Connection.Response studentInfoPage;
@@ -41,11 +42,37 @@ public class AspenWebFetch extends GenericWebFetch {
 
   public Boolean areCredsCorrect() {
     try {
-      return getPage(aspenBaseUrl + "/home.do").statusCode() == 200;
+      Connection.Response homePage = getPage(aspenBaseUrl + "/home.do");
+      if (this.homePage == null){
+        this.homePage = homePage;
+      }
+      return homePage.statusCode() == 200;
     } catch (IOException e) {
       e.printStackTrace();
     }
     return false;
+  }
+
+  public Connection.Response getHomePage() {
+    if (homePage != null) return homePage;
+    try {
+      homePage = getPage(aspenBaseUrl + "/home.do");
+    } catch (IOException e){
+      e.printStackTrace();
+    }
+    return null;
+  }
+
+  public Connection.Response getRecentAssignmentsPage(){
+    try {
+      Map<String, String> params = new HashMap<>();
+      params.put("preferences", "<?xml version=\"1.0\" encoding=\"UTF-8\"?><preference-set><pref id=\"dateRange\" type=\"int\">4</pref></preference-set>");
+      //getPage(aspenBaseUrl + "/studentRecentActivityWidget.do?preferences=<%3Fxml+version%3D\"1.0\"+encoding%3D\"UTF-8\"%3F>%0D%0A<preference-set><pref+id%3D\"dateRange\"+type%3D\"int\">4<%2Fpref><%2Fpreference-set>&rand=1590349426151");
+      return getPage(aspenBaseUrl + "/studentRecentActivityWidget.do", params);
+    } catch (IOException e){
+      e.printStackTrace();
+    }
+    return null;
   }
 
   public Connection.Response getStudentInfoPage() {
@@ -201,7 +228,6 @@ public class AspenWebFetch extends GenericWebFetch {
 
       if (responsePostLogin.statusCode() == 500) AspenCheck.log.warning("Username or Pass incorrect");
 
-      //return responsePostLogin;
     } catch (IOException e) {
       e.printStackTrace();
     }

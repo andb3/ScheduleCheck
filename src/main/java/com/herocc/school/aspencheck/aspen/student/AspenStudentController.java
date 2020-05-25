@@ -24,7 +24,7 @@ public class AspenStudentController {
     if (u != null && p != null) {
       return new ResponseEntity<>(new JSONReturn(getStudent(districtName, u, p), new ErrorInfo()), HttpStatus.OK);
     } else {
-      return new ResponseEntity<>(new JSONReturn(null, new ErrorInfo("Invalid Credentials", 0, "No username or password given")), HttpStatus.UNAUTHORIZED);
+      return AspenCheck.invalidCredentialsResponse();
     }
   }
 

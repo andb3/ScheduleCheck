@@ -18,6 +18,17 @@ public class Assignment {
   public String possibleScore;
   public String gradeLetter;
 
+  public Assignment(String id, String name, String credit, String dateAssigned, String dateDue, String feedback, String score, String possibleScore, String gradeLetter) {
+    this.id = id;
+    this.name = name;
+    this.credit = credit;
+    this.dateAssigned = dateAssigned;
+    this.dateDue = dateDue;
+    this.feedback = feedback;
+    this.score = score;
+    this.possibleScore = possibleScore;
+    this.gradeLetter = gradeLetter;
+  }
 
   public Assignment(Element e, Map<String, Double> gradeScale){
     Elements tdTags = e.getElementsByTag("td");
