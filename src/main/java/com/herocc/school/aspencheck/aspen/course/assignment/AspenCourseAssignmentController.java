@@ -35,7 +35,7 @@ public class AspenCourseAssignmentController {
       if (!aspenWebFetch.areCredsCorrect()){
         return new ResponseEntity<>(new JSONReturn(null, new ErrorInfo("Invalid Credentials", 500, "Username or password is incorrect")), HttpStatus.UNAUTHORIZED);
       }
-      List<Assignment> a = getAssignmentList(aspenWebFetch, getCourse(aspenWebFetch, course, false, null), term);
+      List<Assignment> a = getAssignmentList(aspenWebFetch, getCourse(aspenWebFetch, course, null), term);
       if (a == null) return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new JSONReturn(null, new ErrorInfo("j", 9, "b")));
       return new ResponseEntity<>(new JSONReturn(a, new ErrorInfo()), HttpStatus.OK);
     } else {
@@ -61,6 +61,7 @@ public class AspenCourseAssignmentController {
         e.printStackTrace();
       }
     }
+    AssignmentInfoFetcher.getAdditionalInfoForAssignments(a, assignments);
     return assignments;
   }
 }

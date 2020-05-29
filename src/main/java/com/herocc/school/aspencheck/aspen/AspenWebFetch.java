@@ -10,8 +10,10 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.FormElement;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 
 public class AspenWebFetch extends GenericWebFetch {
   private String aspenBaseUrl;
@@ -21,6 +23,7 @@ public class AspenWebFetch extends GenericWebFetch {
   private Connection.Response courseListPage;
   private Connection.Response schedulePage;
   private Connection.Response studentInfoPage;
+  public Document lastAssignmentDocument;
 
   public AspenWebFetch(String dName, String username, String password) {
     this.aspenBaseUrl = "https://" + dName + ".myfollett.com/aspen";
@@ -31,6 +34,7 @@ public class AspenWebFetch extends GenericWebFetch {
       aspenBaseUrl = d.aspenBaseUrl;
     }
 
+    webUserAgent = webUserAgent + new Random().nextInt(Integer.MAX_VALUE);
     this.login(username, password);
   }
 
@@ -43,7 +47,7 @@ public class AspenWebFetch extends GenericWebFetch {
   public Boolean areCredsCorrect() {
     try {
       Connection.Response homePage = getPage(aspenBaseUrl + "/home.do");
-      if (this.homePage == null){
+      if (this.homePage == null) {
         this.homePage = homePage;
       }
       return homePage.statusCode() == 200;
@@ -57,19 +61,19 @@ public class AspenWebFetch extends GenericWebFetch {
     if (homePage != null) return homePage;
     try {
       homePage = getPage(aspenBaseUrl + "/home.do");
-    } catch (IOException e){
+    } catch (IOException e) {
       e.printStackTrace();
     }
     return null;
   }
 
-  public Connection.Response getRecentAssignmentsPage(){
+  public Connection.Response getRecentAssignmentsPage() {
     try {
       Map<String, String> params = new HashMap<>();
       params.put("preferences", "<?xml version=\"1.0\" encoding=\"UTF-8\"?><preference-set><pref id=\"dateRange\" type=\"int\">4</pref></preference-set>");
       //getPage(aspenBaseUrl + "/studentRecentActivityWidget.do?preferences=<%3Fxml+version%3D\"1.0\"+encoding%3D\"UTF-8\"%3F>%0D%0A<preference-set><pref+id%3D\"dateRange\"+type%3D\"int\">4<%2Fpref><%2Fpreference-set>&rand=1590349426151");
       return getPage(aspenBaseUrl + "/studentRecentActivityWidget.do", params);
-    } catch (IOException e){
+    } catch (IOException e) {
       e.printStackTrace();
     }
     return null;
@@ -165,6 +169,45 @@ public class AspenWebFetch extends GenericWebFetch {
     return null;
   }
 
+  public Connection.Response getAssignmentPage(String assignmentID) {
+    String url = aspenBaseUrl + "/portalAssignmentList.do";
+    Map<String, String> params = new HashMap<>();
+    params.put("userEvent", "2100");
+    params.put("userParam", assignmentID);
+
+    Map<String, String> jumpAssignmentParams = new HashMap<>();
+    jumpAssignmentParams.put("userEvent", "930");
+    jumpAssignmentParams.put("singleSelection", assignmentID);
+
+    try {
+      //getPage(url, resetParams);
+/*      if (lastAssignmentDocument != null) {
+        getPage(aspenBaseUrl + "/jumpToPicklist.do", jumpAssignmentParams);
+        params.clear();
+      }*/
+      Connection.Response assignmentPage = getPage(url, params);
+      lastAssignmentDocument = assignmentPage.parse();
+      return assignmentPage;
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    return null;
+  }
+
+  public Connection.Response getNextAssignmentPage() {
+    String url = aspenBaseUrl + "/portalAssignmentDetail.do";
+    try {
+      Map<String, String> params = Collections.singletonMap("userEvent", "60");
+      Connection.Response assignmentPage = getPage(url, params);
+      //lastAssignmentDocument = assignmentPage.parse();
+      //AspenCheck.log.info("lastAssignmentDocument is now for " + lastAssignmentDocument.getElementById("propertyValue(gcdColName)-span").text());
+      return assignmentPage;
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    return null;
+  }
+
   public Connection.Response getSchedulePage() {
     if (schedulePage != null) return schedulePage;
     String scheduleUrl = (AspenCheck.config.districts.containsKey(districtName)) ? AspenCheck.config.districts.get(districtName).schedulePage : District.defaultSchedulePage;
@@ -190,10 +233,10 @@ public class AspenWebFetch extends GenericWebFetch {
     try {
       String loginUrl = aspenBaseUrl + "/logon.do";
       Connection.Response loginPageResponse = Jsoup.connect(loginUrl)
-                      .userAgent(AspenCheck.config.webUserAgent)
-                      .timeout(10 * 1000)
-                      .followRedirects(true)
-                      .execute();
+        .userAgent(AspenCheck.config.webUserAgent)
+        .timeout(10 * 1000)
+        .followRedirects(true)
+        .execute();
 
       if (loginPageResponse.statusCode() == 404) {
         AspenCheck.log.warning("No login page found at " + aspenBaseUrl);
@@ -214,13 +257,13 @@ public class AspenWebFetch extends GenericWebFetch {
       }
 
       Connection.Response responsePostLogin = Jsoup.connect(loginUrl)
-              .referrer(loginUrl)
-              .userAgent(AspenCheck.config.webUserAgent)
-              .timeout(10 * 1000)
-              .data(mapParams)
-              .cookies(mapLoginPageCookies)
-              .followRedirects(true)
-              .execute();
+        .referrer(loginUrl)
+        .userAgent(AspenCheck.config.webUserAgent)
+        .timeout(10 * 1000)
+        .data(mapParams)
+        .cookies(mapLoginPageCookies)
+        .followRedirects(true)
+        .execute();
 
       Map<String, String> mapLoggedInCookies = responsePostLogin.cookies();
       demCookies.putAll(mapLoggedInCookies);

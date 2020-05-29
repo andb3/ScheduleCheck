@@ -45,7 +45,7 @@ public class Course {
     try {
       this.assignments = AspenCourseAssignmentController.getAssignmentList(webFetch, this, term); // seems like getCourseInfo only works after the current class is set by opening its assignments
       this.classInfoPage = webFetch.getCourseInfoPage(id).parse().body();
-      AspenCheck.log.info("classInfoPage = " + classInfoPage);
+      //AspenCheck.log.info("classInfoPage = " + classInfoPage);
       this.postedGrades = getTermGrades();
       this.categoryTable = getCategoryGrades();
 
@@ -88,7 +88,7 @@ public class Course {
     AspenCheck.log.info("terms = " + terms);
 
     Elements tableCells = categoryTable.getElementsByAttributeValue("class", "listCell");
-    AspenCheck.log.info("tableCells = " + tableCells);
+    //AspenCheck.log.info("tableCells = " + tableCells);
 
     for (int t = 0; t < terms.size(); t++) {
       String term = terms.get(t);

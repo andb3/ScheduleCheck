@@ -17,18 +17,9 @@ public class Assignment {
   public String score;
   public String possibleScore;
   public String gradeLetter;
+  public String category;
+  public Statistics stats;
 
-  public Assignment(String id, String name, String credit, String dateAssigned, String dateDue, String feedback, String score, String possibleScore, String gradeLetter) {
-    this.id = id;
-    this.name = name;
-    this.credit = credit;
-    this.dateAssigned = dateAssigned;
-    this.dateDue = dateDue;
-    this.feedback = feedback;
-    this.score = score;
-    this.possibleScore = possibleScore;
-    this.gradeLetter = gradeLetter;
-  }
 
   public Assignment(Element e, Map<String, Double> gradeScale){
     Elements tdTags = e.getElementsByTag("td");
@@ -55,6 +46,25 @@ public class Assignment {
     // feedback = tdTags.get(5).text().trim(); // TODO when empty, returns percentCredit
   }
 
+  public void updateAdditionalInfo(Element e){
+    category = e.getElementById("propertyValue(relGcdGctOid_gctTypeDesc)-span").text();
+    AspenCheck.log.info("got category = " + category);
+    Element highElement = e.getElementsContainingOwnText("High").last(); // First is "Release Highlight Videos"
+    AspenCheck.log.info("highElement = " + highElement);
+    AspenCheck.log.info("highElement.siblings = " + highElement.siblingElements().toString());
+    AspenCheck.log.info("highElement.parent = " + highElement.parent().toString());
+    String high = highElement.nextElementSibling().text();
+    String low = e.getElementsContainingOwnText("Low").first().nextElementSibling().text();
+    String average = e.getElementsContainingOwnText("Average").first().nextElementSibling().text();
+    String median = e.getElementsContainingOwnText("Median").first().nextElementSibling().text();
+    stats = new Statistics(high, low, average, median);
+  }
+
+  public void updateAdditionalInfo(String category, Statistics stats){
+    this.category = category;
+    this.stats = stats;
+  }
+
   private static String findLetter(double grade, List<Map.Entry<String, Double>> gradeScale){
     double percent = grade * 100;
     gradeScale.sort(Comparator.comparingDouble(Map.Entry::getValue));
@@ -62,7 +72,7 @@ public class Assignment {
       Map.Entry<String, Double> entry = gradeScale.get(i);
       if (i == gradeScale.size() - 1) return  entry.getKey();
       Map.Entry<String, Double> next = gradeScale.get(i + 1);
-      if (entry.getValue() < percent && percent < next.getValue()) {
+      if (entry.getValue() <= percent && percent < next.getValue()) {
         return entry.getKey();
       }
     }

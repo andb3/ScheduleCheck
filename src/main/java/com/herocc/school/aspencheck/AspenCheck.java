@@ -85,4 +85,7 @@ public class AspenCheck {
   public static ResponseEntity<JSONReturn> invalidCredentialsResponse(){
     return new ResponseEntity<>(new JSONReturn(null, new ErrorInfo("Invalid Credentials", 0, "No username or password given")), HttpStatus.UNAUTHORIZED);
   }
+  public static ResponseEntity<JSONReturn> incorrectCredentialsResponse(){
+    return new ResponseEntity<>(new JSONReturn(null, new ErrorInfo("Invalid Credentials", 500, "Username or password is incorrect")), HttpStatus.UNAUTHORIZED);
+  }
 }
