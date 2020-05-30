@@ -137,10 +137,12 @@ public class AspenWebFetch extends GenericWebFetch {
   }
 
   public Connection.Response getCourseAssignmentsPage(String courseId) {
+    String url = aspenBaseUrl + "/portalAssignmentList.do?navkey=academics.classes.list.gcd&maximized=true";
     Map<String, String> map = new HashMap<>();
     map.put("oid", courseId);
     try {
-      return getPage(aspenBaseUrl + "/portalAssignmentList.do?navkey=academics.classes.list.gcd&maximized=true", map);
+      getPage(url, map);
+      return getPage(url, map);
     } catch (IOException e) {
       e.printStackTrace();
     }
