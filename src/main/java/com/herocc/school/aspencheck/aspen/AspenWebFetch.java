@@ -46,11 +46,11 @@ public class AspenWebFetch extends GenericWebFetch {
 
   public Boolean areCredsCorrect() {
     try {
-      Connection.Response homePage = getPage(aspenBaseUrl + "/home.do");
+      Connection.Response homePage = getPage(aspenBaseUrl + "/home.do", true);
       if (this.homePage == null) {
         this.homePage = homePage;
       }
-      return homePage.statusCode() == 200;
+      return homePage.statusCode() == 200 || isOutOfSyncError(homePage); // out of sync error is fixed on next page request
     } catch (IOException e) {
       e.printStackTrace();
     }
@@ -265,6 +265,7 @@ public class AspenWebFetch extends GenericWebFetch {
         .data(mapParams)
         .cookies(mapLoginPageCookies)
         .followRedirects(true)
+        .ignoreHttpErrors(true)
         .execute();
 
       Map<String, String> mapLoggedInCookies = responsePostLogin.cookies();
@@ -275,6 +276,15 @@ public class AspenWebFetch extends GenericWebFetch {
 
     } catch (IOException e) {
       e.printStackTrace();
+    }
+  }
+
+  public static boolean isOutOfSyncError(Connection.Response response) {
+    try {
+      return response.parse().body().getElementsContainingText("out of sync").size() > 0;
+    } catch (IOException e){
+      e.printStackTrace();
+      return false;
     }
   }
 }
