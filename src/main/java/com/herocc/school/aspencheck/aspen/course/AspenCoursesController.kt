@@ -76,25 +76,23 @@ class AspenCoursesController {
 
         fun getCourses(a: AspenWebFetch, term: String?): List<Course> {
             AspenCheck.log.info("getting courses for " + a.districtName + ", term = " + term)
-            val classListPage: Connection.Response? = if (listOf("1", "2", "3", "4").contains(term)) {
+            val classListPage: Connection.Response = if (listOf("1", "2", "3", "4").contains(term)) {
                 a.getCourseListPage(term!!.toInt())
             } else {
                 a.courseListPage
             }
             val courses: MutableList<Course> = ArrayList()
-            if (classListPage!=null) {
-                try {
-                    for (classRow in classListPage.parse().body()
-                        .getElementsByAttributeValueContaining("class", "listCell listRowHeight")) {
-                        val columnOrganization =
-                            if (AspenCheck.config.districts.containsKey(a.districtName)) AspenCheck.config.districts[a.districtName]!!.columnOrganization else District.defaultColumnOrganization()
-                        val c = Course(classRow, columnOrganization)
-                        courses.add(c)
-                    }
-                } catch (e: IOException) {
-                    e.printStackTrace()
-                    AspenCheck.rollbar.error(e, "Error while parsing CourseList of user from " + a.districtName)
+            try {
+                for (classRow in classListPage.parse().body()
+                    .getElementsByAttributeValueContaining("class", "listCell listRowHeight")) {
+                    val columnOrganization =
+                        if (AspenCheck.config.districts.containsKey(a.districtName)) AspenCheck.config.districts[a.districtName]!!.columnOrganization else District.defaultColumnOrganization()
+                    val c = Course(classRow, columnOrganization)
+                    courses.add(c)
                 }
+            } catch (e: IOException) {
+                e.printStackTrace()
+                AspenCheck.rollbar.error(e, "Error while parsing CourseList of user from " + a.districtName)
             }
             return courses
         }

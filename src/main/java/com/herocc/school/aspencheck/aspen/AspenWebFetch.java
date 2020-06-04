@@ -7,6 +7,7 @@ import org.jsoup.Connection;
 import org.jsoup.HttpStatusException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 import org.jsoup.nodes.FormElement;
 
 import java.io.IOException;
@@ -50,7 +51,11 @@ public class AspenWebFetch extends GenericWebFetch {
       if (this.homePage == null) {
         this.homePage = homePage;
       }
-      return homePage.statusCode() == 200 || isOutOfSyncError(homePage); // out of sync error is fixed on next page request
+      if (homePage.statusCode() == 200 || isOutOfSyncError(homePage.parse().body())){
+        return true; // out of sync error is fixed on next page request
+      } else {
+        System.out.println("error on login (" + homePage.url() +") = " + homePage.parse().body());
+      }
     } catch (IOException e) {
       e.printStackTrace();
     }
@@ -92,10 +97,12 @@ public class AspenWebFetch extends GenericWebFetch {
 
   public Connection.Response getCourseListPage() {
     if (courseListPage != null) return courseListPage;
+    String url = aspenBaseUrl + "/portalClassList.do?navkey=academics.classes.list&maximized=true";
     try {
-      AspenCheck.log.info("getting " + aspenBaseUrl + "/portalClassList.do?navkey=academics.classes.list&maximized=true");
+      getPage(url);
+      AspenCheck.log.info("getting " + url);
       AspenCheck.log.info("cookies = " + demCookies);
-      courseListPage = getPage(aspenBaseUrl + "/portalClassList.do?navkey=academics.classes.list&maximized=true");
+      courseListPage = getPage(url);
       AspenCheck.log.info("" + courseListPage.statusCode());
       return courseListPage;
     } catch (IOException e) {
@@ -279,12 +286,7 @@ public class AspenWebFetch extends GenericWebFetch {
     }
   }
 
-  public static boolean isOutOfSyncError(Connection.Response response) {
-    try {
-      return response.parse().body().getElementsContainingText("out of sync").size() > 0;
-    } catch (IOException e){
-      e.printStackTrace();
-      return false;
-    }
+  public static boolean isOutOfSyncError(Element element) {
+      return element.getElementsContainingText("out of sync").size() > 0;
   }
 }

@@ -48,7 +48,7 @@ public class AspenCourseAssignmentController {
     Connection.Response assignmentsPage;
     if (Arrays.asList("1", "2", "3", "4").contains(term)){
       assignmentsPage = a.getCourseAssignmentsPage(course.id, Integer.parseInt(term));
-    }else {
+    } else {
        assignmentsPage = a.getCourseAssignmentsPage(course.id);
     }
 
