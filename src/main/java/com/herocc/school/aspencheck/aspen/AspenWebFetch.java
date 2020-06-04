@@ -241,11 +241,13 @@ public class AspenWebFetch extends GenericWebFetch {
   public void login(String username, String password) {
     try {
       String loginUrl = aspenBaseUrl + "/logon.do";
-      Connection.Response loginPageResponse = Jsoup.connect(loginUrl)
+/*      Connection.Response loginPageResponse = Jsoup.connect(loginUrl)
         .userAgent(AspenCheck.config.webUserAgent)
         .timeout(10 * 1000)
         .followRedirects(true)
-        .execute();
+        .execute();*/
+
+      Connection.Response loginPageResponse = getPage(loginUrl);
 
       if (loginPageResponse.statusCode() == 404) {
         AspenCheck.log.warning("No login page found at " + aspenBaseUrl);
@@ -253,6 +255,8 @@ public class AspenWebFetch extends GenericWebFetch {
       }
 
       Map<String, String> mapLoginPageCookies = loginPageResponse.cookies();
+      demCookies.putAll(mapLoginPageCookies);
+
       Map<String, String> mapParams = new HashMap<>();
       mapParams.put("deploymentId", loginPageResponse.parse().getElementById("deploymentId").attr("value").trim());
       mapParams.put("userEvent", "930");
@@ -265,7 +269,9 @@ public class AspenWebFetch extends GenericWebFetch {
         return;
       }
 
-      Connection.Response responsePostLogin = Jsoup.connect(loginUrl)
+      Connection.Response responsePostLogin = getPage(loginUrl, mapParams);
+
+/*      Connection.Response responsePostLogin = Jsoup.connect(loginUrl)
         .referrer(loginUrl)
         .userAgent(AspenCheck.config.webUserAgent)
         .timeout(10 * 1000)
@@ -273,12 +279,12 @@ public class AspenWebFetch extends GenericWebFetch {
         .cookies(mapLoginPageCookies)
         .followRedirects(true)
         .ignoreHttpErrors(true)
-        .execute();
+        .execute();*/
 
       Map<String, String> mapLoggedInCookies = responsePostLogin.cookies();
       demCookies.putAll(mapLoggedInCookies);
-      demCookies.putAll(mapLoginPageCookies);
 
+      AspenCheck.log.info("loginResponse (" + responsePostLogin.url() + ") = " + responsePostLogin.body());
       if (responsePostLogin.statusCode() == 500) AspenCheck.log.warning("Username or Pass incorrect");
 
     } catch (IOException e) {
