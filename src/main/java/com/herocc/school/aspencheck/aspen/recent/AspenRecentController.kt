@@ -9,6 +9,7 @@ import org.jsoup.nodes.Document
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
+import java.util.concurrent.CompletableFuture
 
 @CrossOrigin
 @RestController
@@ -18,15 +19,15 @@ public class AspenRecentController {
   @RequestMapping("/recent")
   fun serveRecentAssignments(@PathVariable(value = "district-id") districtName: String,
                              @RequestHeader(value = "ASPEN_UNAME", required = false) username: String?,
-                             @RequestHeader(value = "ASPEN_PASS", required = false) password: String?): ResponseEntity<JSONReturn>{
+                             @RequestHeader(value = "ASPEN_PASS", required = false) password: String?): CompletableFuture<ResponseEntity<JSONReturn>> {
     if (username == null || password == null) return AspenCheck.invalidCredentialsResponse()
 
     val aspenWebFetch = AspenWebFetch(districtName, username, password)
     return if (!aspenWebFetch.areCredsCorrect()) {
-      ResponseEntity(JSONReturn(null, ErrorInfo("Invalid Credentials", 500, "Username or password is incorrect")), HttpStatus.UNAUTHORIZED)
+      CompletableFuture.completedFuture(ResponseEntity(JSONReturn(null, ErrorInfo("Invalid Credentials", 500, "Username or password is incorrect")), HttpStatus.UNAUTHORIZED))
     } else {
       val recentAssignments = aspenWebFetch.recentAssignmentsPage
-      ResponseEntity(JSONReturn(parseRecentAssignments(recentAssignments.parse()), ErrorInfo()), HttpStatus.OK)
+      CompletableFuture.completedFuture(ResponseEntity(JSONReturn(parseRecentAssignments(recentAssignments.parse()), ErrorInfo()), HttpStatus.OK))
     }
 
   }

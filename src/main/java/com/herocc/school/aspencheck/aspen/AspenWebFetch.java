@@ -45,16 +45,72 @@ public class AspenWebFetch extends GenericWebFetch {
     this.login(district.aspenUsername, district.aspenPassword);
   }
 
+
+  public void login(String username, String password) {
+    try {
+      String loginUrl = aspenBaseUrl + "/logon.do";
+
+      AspenCheck.log.info("(" + hashCode() + ") old cookies = " + demCookies);
+      Connection.Response loginPageResponse = getPage(loginUrl);
+
+      if (loginPageResponse.statusCode() == 404) {
+        AspenCheck.log.warning("No login page found at " + aspenBaseUrl);
+        return;
+      }
+
+      Map<String, String> loginPageCookies = loginPageResponse.cookies();
+      AspenCheck.log.info("(" + hashCode() + ") adding login page cookies, cookies = " + loginPageCookies);
+      //demCookies.putAll(loginPageCookies);
+
+      Map<String, String> mapParams = new HashMap<>();
+      mapParams.put("deploymentId", loginPageResponse.parse().getElementById("deploymentId").attr("value").trim());
+      mapParams.put("userEvent", "930");
+      mapParams.put("username", username);
+      mapParams.put("password", password);
+      mapParams.put("mobile", "false");
+
+      if (username == null || password == null) {
+        AspenCheck.log.warning("Invalid Username or Password!");
+        return;
+      }
+
+      AspenCheck.log.info("(" + hashCode() + ") old cookies = " + demCookies);
+      Connection.Response responsePostLogin = getPage(loginUrl, mapParams);
+
+/*      Connection.Response responsePostLogin = Jsoup.connect(loginUrl)
+        .method(Connection.Method.POST)
+        .referrer(loginUrl)
+        .userAgent(AspenCheck.config.webUserAgent)
+        .timeout(10 * 1000)
+        .data(mapParams)
+        .cookies(demCookies)
+        .followRedirects(true)
+        .ignoreHttpErrors(true)
+        .execute();*/
+
+      Map<String, String> loggedInCookies = responsePostLogin.cookies();
+      AspenCheck.log.info("(" + hashCode() + ") adding home page cookies, cookies = " + loggedInCookies);
+      //demCookies.putAll(loggedInCookies);
+
+      //AspenCheck.log.info("loginResponse (" + responsePostLogin.url() + ") = " + responsePostLogin.body());
+      if (responsePostLogin.statusCode() == 500) AspenCheck.log.warning("Username or Pass incorrect");
+      else AspenCheck.log.info("logged in " + responsePostLogin.parse().getElementsByClass("applicationSubtitle").first().child(0).text());
+
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+  }
+
   public Boolean areCredsCorrect() {
     try {
       Connection.Response homePage = getPage(aspenBaseUrl + "/home.do", true);
       if (this.homePage == null) {
         this.homePage = homePage;
       }
-      if (homePage.statusCode() == 200 || isOutOfSyncError(homePage.parse().body())){
+      if (homePage.statusCode() == 200 || AspenCheck.isOutOfSyncError(homePage.body())){
         return true; // out of sync error is fixed on next page request
       } else {
-        System.out.println("error on login (" + homePage.url() +") = " + homePage.parse().body());
+        System.out.println("error on onCheckCreds");
       }
     } catch (IOException e) {
       e.printStackTrace();
@@ -236,63 +292,5 @@ public class AspenWebFetch extends GenericWebFetch {
       e.printStackTrace();
     }
     return null;
-  }
-
-  public void login(String username, String password) {
-    try {
-      String loginUrl = aspenBaseUrl + "/logon.do";
-/*      Connection.Response loginPageResponse = Jsoup.connect(loginUrl)
-        .userAgent(AspenCheck.config.webUserAgent)
-        .timeout(10 * 1000)
-        .followRedirects(true)
-        .execute();*/
-
-      Connection.Response loginPageResponse = getPage(loginUrl);
-
-      if (loginPageResponse.statusCode() == 404) {
-        AspenCheck.log.warning("No login page found at " + aspenBaseUrl);
-        return;
-      }
-
-      Map<String, String> mapLoginPageCookies = loginPageResponse.cookies();
-      demCookies.putAll(mapLoginPageCookies);
-
-      Map<String, String> mapParams = new HashMap<>();
-      mapParams.put("deploymentId", loginPageResponse.parse().getElementById("deploymentId").attr("value").trim());
-      mapParams.put("userEvent", "930");
-      mapParams.put("username", username);
-      mapParams.put("password", password);
-      mapParams.put("mobile", "false");
-
-      if (username == null || password == null) {
-        AspenCheck.log.warning("Invalid Username or Password!");
-        return;
-      }
-
-      Connection.Response responsePostLogin = getPage(loginUrl, mapParams);
-
-/*      Connection.Response responsePostLogin = Jsoup.connect(loginUrl)
-        .referrer(loginUrl)
-        .userAgent(AspenCheck.config.webUserAgent)
-        .timeout(10 * 1000)
-        .data(mapParams)
-        .cookies(mapLoginPageCookies)
-        .followRedirects(true)
-        .ignoreHttpErrors(true)
-        .execute();*/
-
-      Map<String, String> mapLoggedInCookies = responsePostLogin.cookies();
-      demCookies.putAll(mapLoggedInCookies);
-
-      AspenCheck.log.info("loginResponse (" + responsePostLogin.url() + ") = " + responsePostLogin.body());
-      if (responsePostLogin.statusCode() == 500) AspenCheck.log.warning("Username or Pass incorrect");
-
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
-  }
-
-  public static boolean isOutOfSyncError(Element element) {
-      return element.getElementsContainingText("out of sync").size() > 0;
   }
 }

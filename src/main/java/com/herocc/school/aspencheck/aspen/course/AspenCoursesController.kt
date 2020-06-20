@@ -5,136 +5,137 @@ import com.herocc.school.aspencheck.District
 import com.herocc.school.aspencheck.ErrorInfo
 import com.herocc.school.aspencheck.JSONReturn
 import com.herocc.school.aspencheck.aspen.AspenWebFetch
+import com.herocc.school.aspencheck.aspen.course.assignment.Assignment
+import com.herocc.school.aspencheck.aspen.course.assignment.AssignmentInfoFetcher
 import kotlinx.coroutines.*
 import org.jsoup.Connection
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.scheduling.annotation.Async
+import org.springframework.scheduling.annotation.EnableAsync
 import org.springframework.web.bind.annotation.*
 import java.io.IOException
 import java.util.*
+import java.util.concurrent.CompletableFuture
 
 @CrossOrigin
 @RestController
 @RequestMapping("/{district-id}/aspen")
-class AspenCoursesController {
+open class AspenCoursesController {
+
+    @Async
     @RequestMapping("/course")
-    fun serveSchedule(
+    fun serveCourseList(
         @PathVariable(value = "district-id") districtName: String,
         @RequestParam(value = "moreData", defaultValue = "false") moreData: String,
         @RequestHeader(value = "ASPEN_UNAME", required = false) u: String?,
         @RequestHeader(value = "ASPEN_PASS", required = false) p: String?,
         @RequestParam(value = "term", required = false) term: String?
-    ): ResponseEntity<JSONReturn> {
-        return if (u!=null && p!=null) {
-            val aspenWebFetch = AspenWebFetch(districtName, u, p)
-            if (!aspenWebFetch.areCredsCorrect()) {
+    ): CompletableFuture<ResponseEntity<JSONReturn>> {
+        return if (u != null && p != null) {
+            val coursesManager = AspenCoursesManager(u, p, AspenCheck.getDistrictByName(districtName))
+            if (!coursesManager.aspenWebFetch.areCredsCorrect()) {
                 AspenCheck.incorrectCredentialsResponse()
             } else {
-                val courses = getCourses(aspenWebFetch, term)
-                if (moreData=="true") getMoreInfoCourses(courses, u, p, districtName, term)
-                ResponseEntity(JSONReturn(courses, ErrorInfo()), HttpStatus.OK)
+                val courses = coursesManager.getCourses(moreData.toLowerCase()=="true", term)
+                if (moreData=="true") {
+                    AspenCheck.log.info("all moredata gotten = ${courses.all { it.assignments!=null }}")
+                }
+                CompletableFuture.completedFuture(ResponseEntity(JSONReturn(courses, ErrorInfo()), HttpStatus.OK))
             }
         } else {
             AspenCheck.invalidCredentialsResponse()
         }
     }
 
+    @Async
     @RequestMapping("/course/{course-id}")
     fun serveCourseInfo(
         @PathVariable(value = "district-id") districtName: String?,
-        @PathVariable(value = "course-id") course: String?,
+        @PathVariable(value = "course-id") courseID: String?,
         @RequestHeader(value = "ASPEN_UNAME", required = false) u: String?,
         @RequestHeader(value = "ASPEN_PASS", required = false) p: String?,
         @RequestParam(value = "term", required = false) term: String?
-    ): ResponseEntity<JSONReturn> {
+    ): CompletableFuture<ResponseEntity<JSONReturn>> {
         return if (u!=null && p!=null) {
-            val a = AspenWebFetch(districtName, u, p)
-            if (!a.areCredsCorrect()) {
+            val coursesManager = AspenCoursesManager(u, p, AspenCheck.getDistrictByName(districtName))
+            if (!coursesManager.aspenWebFetch.areCredsCorrect()) {
                 return AspenCheck.incorrectCredentialsResponse()
             }
-            val c = getCourse(a, course, false, term)!!.getMoreInformation(a, term)
-                ?: return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-                    JSONReturn(
-                        null,
-                        ErrorInfo(
-                            "Course not Found",
-                            404,
-                            "The course you tried to fetch doesn't exist or was inaccessible"
-                        )
-                    )
-                )
-            ResponseEntity(JSONReturn(c, ErrorInfo()), HttpStatus.OK)
+            val course = coursesManager.getCourses(true, term).find { it.id==courseID }
+                ?: return AspenCheck.incorrectCourseIDResponse()
+            CompletableFuture.completedFuture(ResponseEntity(JSONReturn(course, ErrorInfo()), HttpStatus.OK))
         } else {
             AspenCheck.invalidCredentialsResponse()
         }
     }
+}
 
-    companion object {
-        fun getCourses(a: AspenWebFetch): List<Course> {
-            return getCourses(a, null)
+class AspenCoursesManager(
+    private val username: String,
+    private val password: String,
+    private val district: District,
+    val aspenWebFetch: AspenWebFetch = AspenWebFetch(district.districtName, username, password)
+) {
+
+    fun getCourses(moreData: Boolean = false, term: String? = null): List<Course> {
+        AspenCheck.log.info("getting courses for " + district.districtName + ", term = " + term)
+        val classListPage: Connection.Response = when (term) {
+            in listOf("1", "2", "3", "4") -> aspenWebFetch.getCourseListPage(term!!.toInt())
+            else -> aspenWebFetch.getCourseListPage()
         }
-
-        fun getCourses(a: AspenWebFetch, term: String?): List<Course> {
-            AspenCheck.log.info("getting courses for " + a.districtName + ", term = " + term)
-            val classListPage: Connection.Response = if (listOf("1", "2", "3", "4").contains(term)) {
-                a.getCourseListPage(term!!.toInt())
-            } else {
-                a.courseListPage
+        try {
+            val courseElements = classListPage.parse().body().getElementsByAttributeValueContaining("class", "listCell listRowHeight")
+            val courses = courseElements.map { classRow ->
+                Course(classRow, district.columnOrganization)
             }
-            val courses: MutableList<Course> = ArrayList()
-            try {
-                for (classRow in classListPage.parse().body()
-                    .getElementsByAttributeValueContaining("class", "listCell listRowHeight")) {
-                    val columnOrganization =
-                        if (AspenCheck.config.districts.containsKey(a.districtName)) AspenCheck.config.districts[a.districtName]!!.columnOrganization else District.defaultColumnOrganization()
-                    val c = Course(classRow, columnOrganization)
-                    courses.add(c)
-                }
-            } catch (e: IOException) {
-                e.printStackTrace()
-                AspenCheck.rollbar.error(e, "Error while parsing CourseList of user from " + a.districtName)
+            if (moreData) {
+                getMoreInfoCourses(courses, term)
             }
             return courses
+        } catch (e: IOException) {
+            e.printStackTrace()
+            AspenCheck.rollbar.error(e, "Error while parsing CourseList of user from " + district.districtName)
+            return emptyList()
         }
+    }
 
-        fun getMoreInfoCourses(
-            courses: List<Course>,
-            username: String,
-            password: String,
-            districtName: String,
-            term: String?
-        ) {
-            runBlocking {
-                val webFetches = (0 until 4).map { AspenWebFetch(districtName, username, password) }
-                val jobs = courses.chunked(courses.size / webFetches.size).mapIndexed { i, coursesPerWebFetch ->
-                    CoroutineScope(Dispatchers.IO).launch {
-                        val webFetch = webFetches[i]
-                        coursesPerWebFetch.forEach { course ->
-                            //AspenCheck.log.info("webFetch for ${course.name} login = ${webFetch.areCredsCorrect()}")
-                            course.getMoreInformation(webFetch, term)
-                            //AspenCheck.log.info("webFetch after for ${course.name} login = ${webFetch.areCredsCorrect()}")
-                        }
+    fun getMoreInfoCourses(courses: List<Course>, term: String?) {
+        runBlocking {
+            val webFetches = (0 until 4).map { AspenWebFetch(district.districtName, username, password) }
+            val jobs = courses.chunked(courses.size / webFetches.size).mapIndexed { i, coursesPerWebFetch ->
+                CoroutineScope(Dispatchers.IO).launch {
+                    val webFetch = webFetches[i]
+                    coursesPerWebFetch.forEach { course ->
+                        //AspenCheck.log.info("webFetch for ${course.name} login = ${webFetch.areCredsCorrect()}")
+                        course.getMoreInformation(webFetch, term)
+                        //AspenCheck.log.info("webFetch after for ${course.name} login = ${webFetch.areCredsCorrect()}")
                     }
                 }
-                jobs.joinAll()
             }
+            jobs.joinAll()
         }
+    }
+}
 
-        fun getCourse(a: AspenWebFetch, courseId: String?, moreData: Boolean, term: String?): Course? {
-            val enrolledCourses = getCourses(a)
-            for (c in enrolledCourses) {
-                if (c.id.equals(courseId, ignoreCase = true)
-                    || c.code.equals(courseId, ignoreCase = true)
-                    || c.name.equals(courseId, ignoreCase = true)
-                )
-                    return if (moreData) c.getMoreInformation(a, term) else c
-            }
-            return null
-        }
+fun getAssignmentList(a: AspenWebFetch, course: Course, term: String?): List<Assignment> {
+    val assignmentsPage: Connection.Response = when (term) {
+        in listOf("1", "2", "3", "4") -> a.getCourseAssignmentsPage(course.id, term!!.toInt())
+        else -> a.getCourseAssignmentsPage(course.id)
+    } ?: return emptyList()
 
-        @JvmStatic
-        fun getCourse(a: AspenWebFetch, courseId: String?, term: String?): Course? {
-            return getCourse(a, courseId, true, term)
-        }
+    try {
+        val assignmentElements = assignmentsPage.parse().body().getElementsByAttributeValueContaining("class", "listCell listRowHeight")
+        val assignments = assignmentElements.map { assignmentRow ->
+            if (assignmentRow.text().contains("No matching records")) return@map null
+            Assignment(assignmentRow, AspenCheck.config.districts[a.districtName]!!.gradeScale)
+        }.filterNotNull()
+
+        AssignmentInfoFetcher().getAdditionalInfoForAssignments(a, assignments)
+        return assignments
+
+    } catch (e: IOException) {
+        e.printStackTrace()
+        return emptyList()
     }
 }

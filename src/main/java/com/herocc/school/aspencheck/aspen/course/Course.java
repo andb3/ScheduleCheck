@@ -3,7 +3,6 @@ package com.herocc.school.aspencheck.aspen.course;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.herocc.school.aspencheck.AspenCheck;
 import com.herocc.school.aspencheck.aspen.AspenWebFetch;
-import com.herocc.school.aspencheck.aspen.course.assignment.AspenCourseAssignmentController;
 import com.herocc.school.aspencheck.aspen.course.assignment.Assignment;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
@@ -43,7 +42,7 @@ public class Course {
   }
   public Course getMoreInformation(AspenWebFetch webFetch, String term) {
     try {
-      this.assignments = AspenCourseAssignmentController.getAssignmentList(webFetch, this, term); // seems like getCourseInfo only works after the current class is set by opening its assignments
+      this.assignments = AspenCoursesControllerKt.getAssignmentList(webFetch, this, term); // seems like getCourseInfo only works after the current class is set by opening its assignments so do that first
       this.classInfoPage = webFetch.getCourseInfoPage(id).parse().body();
       //AspenCheck.log.info("classInfoPage = " + classInfoPage);
       this.postedGrades = getTermGrades();

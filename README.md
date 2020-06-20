@@ -14,10 +14,9 @@ All endpoints are prefixed with '/api/v1/{district-id}' where `district-id` is t
   * [`/schedule`](#schedule): Returns schedule information, such as day, block, etc. (config / auth optional)
   * `/student`: Returns grade, ID, etc regarding the student (auth required)
   * [`/course`](#course-list): Index of enrolled courses, their grades, teachers, etc (auth required)
-    * Can use `moreData=true` to get additional info about courses including a list of their assignments
+    * Can use `moreData=true` to get additional info about courses including a list of their assignments and grades
     * Can use `term={number}` to change `currentTermGrade` and the term of the assignments is `moreData=true` is specified
   * [`/course/{course-id}`](#course): Same info as `/course?moreData=true` but for only one course (can use `term`)
-  * [`/course/{course-id}/assignment`](#assignment-list): Gets a list of all of a course's assignments and their grades
   * [`/recent`](#recent-assignments): Gets a list of recently entered assignments
 
 * `/announcements`: Returns all announcements scheduled to run (sources gathered from config)
@@ -39,9 +38,9 @@ All endpoints are prefixed with '/api/v1/{district-id}' where `district-id` is t
 - All other examples show only data field
 
 ### Check Login
-https://aspencheck.herokuapp.com/api/v1/{district}/aspen/checkLogin
+https://aspenapi.herokuapp.com/api/v1/{district}/aspen/checkLogin
 ```shell script
-curl -H "ASPEN_UNAME: {username}" -H 'ASPEN_PASS: {password}' -X GET 'https://aspencheck.herokuapp.com/api/v1/{district}/aspen/checkLogin' | json_pp
+curl -H "ASPEN_UNAME: {username}" -H 'ASPEN_PASS: {password}' -X GET 'https://aspenapi.herokuapp.com/api/v1/{district}/aspen/checkLogin' | json_pp
 ```
 
 ```javascript
@@ -49,9 +48,9 @@ curl -H "ASPEN_UNAME: {username}" -H 'ASPEN_PASS: {password}' -X GET 'https://as
 ```
 
 ### Schedule
-https://aspencheck.herokuapp.com/api/v1/{district}/aspen/schedule
+https://aspenapi.herokuapp.com/api/v1/{district}/aspen/schedule
 ```shell script
-curl https://aspencheck.herokuapp.com/api/v1/{district}/aspen/schedule | json_pp
+curl https://aspenapi.herokuapp.com/api/v1/{district}/aspen/schedule | json_pp
 ```
 
 ```javascript
@@ -75,9 +74,9 @@ curl https://aspencheck.herokuapp.com/api/v1/{district}/aspen/schedule | json_pp
 ```
 
 ### Course List
-https://aspencheck.herokuapp.com/api/v1/{district}/aspen/course
+https://aspenapi.herokuapp.com/api/v1/{district}/aspen/course
 ```shell script
-curl -H "ASPEN_UNAME: {username}" -H 'ASPEN_PASS: {password}' -X GET 'https://aspencheck.herokuapp.com/api/v1/{district}/aspen/course' | json_pp
+curl -H "ASPEN_UNAME: {username}" -H 'ASPEN_PASS: {password}' -X GET 'https://aspenapi.herokuapp.com/api/v1/{district}/aspen/course' | json_pp
 ```
 ```javascript
 "data": [
@@ -120,9 +119,9 @@ curl -H "ASPEN_UNAME: {username}" -H 'ASPEN_PASS: {password}' -X GET 'https://as
 - `postedGrades`, `assignments`, and `categoryTable` are only available when moreData=true
 
 ### Course
-https://aspencheck.herokuapp.com/api/v1/{district}/aspen/course/{course-id}
+https://aspenapi.herokuapp.com/api/v1/{district}/aspen/course/{course-id}
 ```shell script
-curl -H "ASPEN_UNAME: {username}" -H 'ASPEN_PASS: {password}' -X GET 'https://aspencheck.herokuapp.com/api/v1/{district}/aspen/course/{course-id}' | json_pp
+curl -H "ASPEN_UNAME: {username}" -H 'ASPEN_PASS: {password}' -X GET 'https://aspenapi.herokuapp.com/api/v1/{district}/aspen/course/{course-id}' | json_pp
 ```
 ```javascript
 "data": {
@@ -141,7 +140,17 @@ curl -H "ASPEN_UNAME: {username}" -H 'ASPEN_PASS: {password}' -X GET 'https://as
         "4" : "D"
     },
     "assignments" : [
-           {...},
+       {
+           "id": "ABC00000123Gtk",
+           "name": "Assignment Name",
+           "credit" : "100%",
+           "score" : "4.5",
+           "possibleScore" : "5.0",
+           "letterGrade": "A-",
+           "dateDue": "M/D/YYYY",
+           "dateAssigned": "M/D/YYYY"
+       },
+       ...
     ],
     "categoryTable" : {
         "1" : [
@@ -160,37 +169,15 @@ curl -H "ASPEN_UNAME: {username}" -H 'ASPEN_PASS: {password}' -X GET 'https://as
 ```
 **Notes**
 - `postedGrades`, `assignments`, and `categoryTable` are only available when moreData=true
-
-### Assignment List
-https://aspencheck.herokuapp.com/api/v1/{district}/aspen/course/{course-id}/assignment
-```shell script
-curl -H "ASPEN_UNAME: {username}" -H 'ASPEN_PASS: {password}' -X GET 'https://aspencheck.herokuapp.com/api/v1/{district}/aspen/course/{course-id}/assignment' | json_pp
-```
-```javascript
-"data": [
-    {
-        "id": "ABC00000123Gtk",
-        "name": "Assignment Name",
-        "credit" : "100%",
-        "score" : "4.5",
-        "possibleScore" : "5.0",
-        "letterGrade": "A-",
-        "dateDue": "M/D/YYYY",
-        "dateAssigned": "M/D/YYYY"
-    },
-    ...
-]
-```
-**Notes**
 - `credit` can also be "Ungraded" or "Msg calculates ..."
 - `score` is null if no grade or missing
 - `possibleScore` is null if no grade, if missing
 - `letterGrade` is null if no grading scale provided
 
 ### Recent Assignments
-https://aspencheck.herokuapp.com/api/v1/{district}/aspen/recent
+https://aspenapi.herokuapp.com/api/v1/{district}/aspen/recent
 ```shell script
-curl -H "ASPEN_UNAME: {username}" -H 'ASPEN_PASS: {password}' -X GET 'https://aspencheck.herokuapp.com/api/v1/{district}/aspen/recent' | json_pp
+curl -H "ASPEN_UNAME: {username}" -H 'ASPEN_PASS: {password}' -X GET 'https://aspenapi.herokuapp.com/api/v1/{district}/aspen/recent' | json_pp
 ```
 ```javascript
 "data": [

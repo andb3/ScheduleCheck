@@ -38,7 +38,13 @@ public class CalendarController {
       eventList.addAll(new ICalendar(getICal(url)).getEvents(true));
     }
     for (String url : d.announcementsSources.get(GenericEventGenerator.SourceType.csv)){
-      eventList.addAll(new CSVParse(GenericWebFetch.getURL(url)).getEvents(true));
+      String eventsPage = null;
+      try {
+        eventsPage = new GenericWebFetch().getPage(url).body();
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+      eventList.addAll(new CSVParse(eventsPage).getEvents(true));
     }
     d.events = eventList;
   }

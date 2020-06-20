@@ -46,16 +46,14 @@ public class GenericWebFetch {
         }
       }
     }
-    return success;
-  }
-
-  public static String getURL(String url) {
-    GenericWebFetch g = new GenericWebFetch();
-    try {
-      return g.getPage(url).body();
-    } catch (IOException e) {
-      e.printStackTrace();
+    if (AspenCheck.isOutOfSyncError(success.body())){
+      new Exception("Aspen returned out of sync error for " + url).printStackTrace();
+    } else if (AspenCheck.isNotLoggedOnError(success.body())){
+      new Exception("(" + hashCode() + ") Aspen returned not logged in error for " + url).printStackTrace();
     }
-    return null;
+    Map<String, String> newCookies = Utils.subtract(success.cookies(), demCookies);
+    if (!newCookies.isEmpty()) AspenCheck.log.info("("+ hashCode() +") new cookies = " + newCookies);
+    demCookies.putAll(success.cookies());
+    return success;
   }
 }

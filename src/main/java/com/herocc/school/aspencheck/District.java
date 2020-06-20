@@ -109,4 +109,10 @@ public class District extends TimestampedObject {
   }
 
   public static String defaultSchedulePage = "/studentScheduleContextList.do?navkey=myInfo.sch.list";
+
+  public static District withName(String name){
+    District d = new District();
+    d.districtName = name;
+    return d;
+  }
 }
