@@ -19,6 +19,8 @@ import java.util.Random;
 public class AspenWebFetch extends GenericWebFetch {
   private String aspenBaseUrl;
   public String districtName;
+  public String username;
+  public String password;
 
   private Connection.Response homePage;
   private Connection.Response courseListPage;
@@ -29,6 +31,8 @@ public class AspenWebFetch extends GenericWebFetch {
   public AspenWebFetch(String dName, String username, String password) {
     this.aspenBaseUrl = "https://" + dName + ".myfollett.com/aspen";
     this.districtName = dName;
+    this.username = username;
+    this.password = password;
 
     if (AspenCheck.config.districts.containsKey(dName)) {
       District d = AspenCheck.config.districts.get(dName);

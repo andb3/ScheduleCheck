@@ -8,10 +8,10 @@ import java.lang.NullPointerException
 
 class AssignmentInfoFetcher {
 
-  fun getAdditionalInfoForAssignments(aspenWebFetch: AspenWebFetch, assignments: List<Assignment>){
+  fun getAdditionalInfoForAssignments(aspenWebFetch: AspenWebFetch, courseID: String, assignments: List<Assignment>){
     sync(aspenWebFetch, assignments)
     //partialAsync(aspenWebFetch, assignments)
-    //async(aspenWebFetch, assignments)
+    //async(aspenWebFetch, courseID, assignments)
   }
 
   private fun sync(aspenWebFetch: AspenWebFetch, assignments: List<Assignment>){
@@ -46,15 +46,23 @@ class AssignmentInfoFetcher {
         assignments.first { it.id == response.id }.updateAdditionalInfo(response.category, response.stats)
       }
     }
+
+    println("responses = $responses")
+    println("got all responses = ${assignments.all { it.category != null }}")
+    aspenWebFetch.lastAssignmentDocument = null
   }
 
-  private fun async(aspenWebFetch: AspenWebFetch, assignments: List<Assignment>){
+  private fun async(aspenWebFetch: AspenWebFetch, courseID: String, assignments: List<Assignment>){
     runBlocking {
       val responses: List<Deferred<AssignmentResponse>> = assignments.mapIndexed { index, assignment ->
           if (index == 0){
             CompletableDeferred(aspenWebFetch.getAssignmentPage(assignment.id).parse().toAssignmentResponse(assignments))
           } else {
-            CoroutineScope(Dispatchers.IO).async { aspenWebFetch.nextAssignmentPage.parse().toAssignmentResponse(assignments) }
+            val webFetch = AspenWebFetch(aspenWebFetch.districtName, aspenWebFetch.username, aspenWebFetch.password)
+            CoroutineScope(Dispatchers.IO).async {
+              webFetch.getCourseAssignmentsPage(courseID)
+              webFetch.getAssignmentPage(assignment.id).parse().toAssignmentResponse(assignments)
+            }
           }
       }
       responses.awaitAll().forEach { response ->
@@ -62,6 +70,7 @@ class AssignmentInfoFetcher {
       }
       println("responses = ${responses.awaitAll()}")
       println("got all responses = ${responses.awaitAll().map { it.id } == assignments.map { it.id }}")
+      aspenWebFetch.lastAssignmentDocument = null
     }
   }
 }

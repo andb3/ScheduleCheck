@@ -86,6 +86,9 @@ class AspenCoursesManager(
         }
         try {
             val courseElements = classListPage.parse().body().getElementsByAttributeValueContaining("class", "listCell listRowHeight")
+            if(courseElements[0].getElementsContainingOwnText("No matching records").size > 0){
+                return getCourses(moreData, "4")
+            }
             val courses = courseElements.map { classRow ->
                 Course(classRow, district.columnOrganization)
             }
@@ -106,6 +109,9 @@ class AspenCoursesManager(
             val jobs = courses.chunked(courses.size / webFetches.size).mapIndexed { i, coursesPerWebFetch ->
                 CoroutineScope(Dispatchers.IO).launch {
                     val webFetch = webFetches[i]
+                    if(term != null){
+                        webFetch.getCourseListPage(term.toInt())
+                    }
                     coursesPerWebFetch.forEach { course ->
                         //AspenCheck.log.info("webFetch for ${course.name} login = ${webFetch.areCredsCorrect()}")
                         course.getMoreInformation(webFetch, term)
@@ -131,7 +137,7 @@ fun getAssignmentList(a: AspenWebFetch, course: Course, term: String?): List<Ass
             Assignment(assignmentRow, AspenCheck.config.districts[a.districtName]!!.gradeScale)
         }.filterNotNull()
 
-        AssignmentInfoFetcher().getAdditionalInfoForAssignments(a, assignments)
+        AssignmentInfoFetcher().getAdditionalInfoForAssignments(a, course.id, assignments)
         return assignments
 
     } catch (e: IOException) {
