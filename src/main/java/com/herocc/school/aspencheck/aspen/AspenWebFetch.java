@@ -156,7 +156,7 @@ public class AspenWebFetch extends GenericWebFetch {
   }
 
   public Connection.Response getCourseListPage() {
-    if (courseListPage != null) return courseListPage;
+    //if (courseListPage != null) return courseListPage;
     String url = aspenBaseUrl + "/portalClassList.do?navkey=academics.classes.list&maximized=true";
     try {
       getPage(url);
@@ -172,7 +172,7 @@ public class AspenWebFetch extends GenericWebFetch {
   }
 
   public Connection.Response getCourseListPage(int term) {
-    if (courseListPage != null) return courseListPage;
+    //if (courseListPage != null) return courseListPage;
     String url = aspenBaseUrl + "/portalClassList.do?navkey=academics.classes.list&maximized=true";
     try {
       AspenCheck.log.info("getting " + aspenBaseUrl + "/portalClassList.do?navkey=academics.classes.list&maximized=true");
